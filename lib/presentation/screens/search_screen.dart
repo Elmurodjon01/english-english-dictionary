@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
+import 'package:http/http.dart' as http;
 import 'package:im_animations/im_animations.dart';
+
+import '../../constants/keys.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -11,33 +13,55 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  Timer? debounce;
-  late Stream stream;
+   Timer? debounce;
+  // late Stream stream;
   StreamController streamController = StreamController();
   TextEditingController _controller = TextEditingController();
+  late StreamController _streamController;
+  late Stream _stream;
+  late Timer search;
+  _search() async {
+    if (_controller.text == null || _controller.text.length == 0) {
+      _streamController.add(null);
+      return;
+    } else {
+      _streamController.add('waiting');
+      final data = await http.get(Uri.parse(url + token +  _controller.text.trim()),
+          headers: {'Authorization': 'Token ' + token});
+      print(data.body);
+      if (data.body.contains('[{"message":"No definition :("}]')) {
+        _streamController.add('NoData');
+        return;
+      } else {
+        _streamController.add(json.decode(data.body));
+        return;
+      }
+    }
+  }
 
   @override
   void initState() {
+    _streamController = StreamController();
+    _stream = _streamController.stream;
     super.initState();
-    stream = streamController.stream;
   }
 
-  String url = "https://owlbot.info/api/v4/dictionary/";
-  String token = '94043dfb834b3e3869d3a6919a91a46df04dd68a';
-  searching() async {
-    if (_controller.text == null || _controller.text.length == 0) {
-      streamController.add(null);
-      return;
-    }
-    streamController.add('waiting');
-    Response response =
-    await get(Uri.parse(url + _controller.text.trim()), headers: {
-      "Authentication": "Token $token",
-    });
-    streamController.add(
-      json.decode(response.body),
-    );
-  }
+  // String url = "https://owlbot.info/api/v4/dictionary/";
+  // String token = '94043dfb834b3e3869d3a6919a91a46df04dd68a';
+  // searching() async {
+  //   if (_controller.text == null || _controller.text.length == 0) {
+  //     streamController.add(null);
+  //     return;
+  //   }
+  //   streamController.add('waiting');
+  //   Response response =
+  //   await get(Uri.parse(url + _controller.text.trim()), headers: {
+  //     "Authentication": "Token $token",
+  //   });
+  //   streamController.add(
+  //     json.decode(response.body),
+  //   );
+  // }
 
   Widget build(BuildContext context) {
     final _height = MediaQuery.of(context).size.height;
@@ -81,7 +105,7 @@ class _SearchScreenState extends State<SearchScreen> {
                             if (debounce?.isActive ?? false) debounce?.cancel();
                             debounce =
                                 Timer(const Duration(milliseconds: 1000), () {
-                                  searching();
+                                  _search();
                                 });
                           },
                         ),
@@ -110,7 +134,7 @@ class _SearchScreenState extends State<SearchScreen> {
                               color: Color.fromARGB(255, 9, 1, 41),
                             ),
                             onPressed: () {
-                              searching();
+                              search;
                             },
                           ),
                         ),
@@ -132,7 +156,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 10, top: 10),
                   child: StreamBuilder(
-                      stream: stream,
+                      stream: _stream,
                       builder: (BuildContext ctx, AsyncSnapshot snapshot) {
                         if (snapshot.data == null) {
                           return Center(
@@ -140,36 +164,39 @@ class _SearchScreenState extends State<SearchScreen> {
                           );
                         }
 
-                        if (snapshot.data == "waiting") {
-                          return Center(
-                            child: CircularProgressIndicator(),
-                          );
+                        if (snapshot.hasData) {
+                          if (snapshot.data.lenght > 1){
+                            return Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+
                         }
 
                         return ListView.builder(
                           itemCount: snapshot.data["definitions"].length,
-                          itemBuilder: (BuildContext context, int index) {
+                          itemBuilder: (ctx, i) {
                             return ListBody(
                               children: <Widget>[
                                 Container(
                                   color: Colors.grey[300],
                                   child: ListTile(
-                                    leading: snapshot.data["definitions"][index]
+                                    leading: snapshot.data["definitions"][i]
                                     ["image_url"] ==
                                         null
-                                        ? null
+                                         ? null
                                         : CircleAvatar(
                                       backgroundImage: NetworkImage(
                                           snapshot.data["definitions"]
-                                          [index]["image_url"]),
+                                          [i]["image_url"]),
                                     ),
                                     title: Text(
-                                        "${"${_controller.text.trim()}(" + snapshot.data["definitions"][index]["type"]})"),
+                                        "${"${_controller.text.trim()}(" + snapshot.data["definitions"][i]["type"]})"),
                                   ),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.all(8.0),
-                                  child: Text(snapshot.data["definitions"][index]
+                                  child: Text(snapshot.data["definitions"][i]
                                   ["definition"]),
                                 )
                               ],

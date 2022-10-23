@@ -2,6 +2,7 @@
 import 'package:eng_eng_dictionary/presentation/screens/study_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../services/provider.dart';
 import '../../widgets /drawer.dart';
@@ -41,7 +42,9 @@ class _HomeScreenState extends State<HomeScreen> {
             elevation: 0,
             actions: [
               IconButton(
-                onPressed: () {},
+                onPressed: () {
+                 Share.share('https://play.google.com/store/apps/details?id=com.FDGEntertainment.redball4.gp');
+                },
                 icon: const Icon(
                   Icons.share_rounded,
                 ),

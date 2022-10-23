@@ -1,8 +1,8 @@
 
+import 'package:eng_eng_dictionary/widgets%20/popup_alert.dart';
 import 'package:eng_eng_dictionary/widgets%20/reusable.dart';
 import 'package:eng_eng_dictionary/widgets%20/search_view.dart';
 import 'package:flutter/material.dart';
-import 'package:rflutter_alert/rflutter_alert.dart';
 
 import '../constants/constants.dart';
 
@@ -39,7 +39,7 @@ class _SearchCardState extends State<SearchCard> {
             children: [
               IconButton(
                 onPressed: () {
-
+                  AlertMessage().onBasicAlertPressed(context);
                 },
                 icon: const Icon(
                   Icons.info_outline,
